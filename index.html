@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Éverlune">
+  <meta name="theme-color" content="#1b2433">
+  <meta name="description" content="Éverlune — exploration paisible en monde ouvert, en vraie 3D pixelisée.">
+  <title>Éverlune</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="touch-layer"></div>
+
+  <div id="joy-base"><div id="joy-knob"></div></div>
+
+  <div id="hud" hidden>
+    <button id="btn-menu" class="hud-btn" aria-label="Menu">☰</button>
+    <button id="btn-run" class="hud-btn touch-only" aria-label="Courir">🏃</button>
+    <div id="toast"></div>
+    <div id="stats" hidden></div>
+  </div>
+
+  <div id="start" class="overlay">
+    <div class="panel title-panel">
+      <h1>Éverlune</h1>
+      <p class="tagline">Un monde paisible à parcourir, sans but ni hâte.</p>
+      <p id="loading">Le monde se dessine…</p>
+      <button id="btn-start" class="primary" hidden>Entrer dans le rêve</button>
+      <p class="hint desktop-only">ZQSD / WASD pour marcher · Maj pour courir · Souris pour regarder · Échap pour le menu</p>
+      <p class="hint touch-only">Pouce gauche pour marcher · glisser à droite pour regarder · mode paysage conseillé</p>
+    </div>
+  </div>
+
+  <div id="menu" class="overlay" hidden>
+    <div class="panel">
+      <h2>Pause</h2>
+      <label>Heure du jour <input id="opt-time" type="range" min="0" max="1" step="0.001"></label>
+      <label>Durée d'une journée <span id="opt-daylen-v"></span>
+        <input id="opt-daylen" type="range" min="2" max="60" step="1"></label>
+      <label>Sensibilité <input id="opt-sens" type="range" min="0.3" max="2.5" step="0.05"></label>
+      <label>Qualité
+        <select id="opt-quality">
+          <option value="low">Basse</option>
+          <option value="medium">Moyenne</option>
+          <option value="high">Haute</option>
+        </select>
+      </label>
+      <label class="row"><input id="opt-bob" type="checkbox"> Léger balancement de la tête</label>
+      <label class="row"><input id="opt-stats" type="checkbox"> Afficher les performances</label>
+      <label>Graine du monde
+        <span class="row"><input id="opt-seed" type="text" maxlength="32"><button id="btn-seed">Nouveau monde</button></span>
+      </label>
+      <p id="discoveries"></p>
+      <button id="btn-resume" class="primary">Reprendre</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
