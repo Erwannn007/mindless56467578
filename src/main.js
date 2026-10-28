@@ -11,6 +11,7 @@ import { createFireflies } from './render/fireflies.js';
 import { Player } from './player/player.js';
 import { Input } from './player/input.js';
 import { UI } from './ui/ui.js';
+import { AudioEngine } from './audio/audio.js';
 
 const settings = loadSettings();
 if (isTouch) document.body.classList.add('touch');
@@ -35,6 +36,7 @@ let quality = QUALITY[settings.quality] || QUALITY.medium;
 const shadows = new ShadowPass(quality.shadowSize, quality.shadowExtent);
 
 let gen, chunks, player;
+const audio = new AudioEngine();
 const input = new Input(canvas, document.getElementById('touch-layer'), null);
 
 function createWorld(seed) {
@@ -42,6 +44,7 @@ function createWorld(seed) {
   gen = new WorldGen(seed);
   chunks = new ChunkManager(scene, gen, materials, quality);
   player = new Player(gen, chunks);
+  player.onStep = (surface, intensity, side) => audio.step(surface, intensity, side);
   input.player = player;
   const saved = settings.player && settings.player.seed === seed ? settings.player : null;
   if (saved) player.place(saved.x, saved.z, saved.yaw, saved.pitch);
@@ -54,6 +57,7 @@ function createWorld(seed) {
 
 function applySettings() {
   input.sensitivity = settings.sensitivity;
+  audio.setVolumes(settings.volume, settings.music);
   if (player) player.headBob = settings.headBob !== false;
 }
 
@@ -84,6 +88,8 @@ let started = false;
 const ui = new UI(settings, {
   start() {
     started = true;
+    audio.unlock();
+    applySettings();
     resume();
   },
   pause,
@@ -103,6 +109,7 @@ const ui = new UI(settings, {
 function pause() {
   if (!started) return;
   running = false;
+  audio.setPaused(true);
   input.enabled = false;
   input.releaseAll();
   if (document.pointerLockElement) document.exitPointerLock();
@@ -112,9 +119,11 @@ function pause() {
 
 function resume() {
   running = true;
+  audio.unlock();
+  audio.setPaused(false);
   input.enabled = true;
   ui.showGame();
-  if (!isTouch) canvas.requestPointerLock?.();
+  if (!isTouch) canvas.requestPointerLock?.()?.catch?.(() => {});
 }
 
 document.addEventListener('pointerlockchange', () => {
@@ -125,7 +134,8 @@ addEventListener('keydown', (e) => {
   else if ((e.code === 'Escape' || e.code === 'KeyM') && running) pause();
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (running) pause(); savePlayer(); }
+  if (document.hidden) { if (running) pause(); savePlayer(); audio.suspend(); }
+  else if (started) audio.resume();
 });
 
 function savePlayer() {
@@ -170,6 +180,8 @@ function frame(now) {
   }
 
   chunks.update(player.x, player.z, running ? 5 : 12);
+
+  audio.update(dt, { player, gen, night: env.uNight.value, timeOfDay: settings.timeOfDay });
 
   sky.position.copy(camera.position);
   fireflies.userData.uniforms.uGround.value = player.y;
@@ -218,4 +230,4 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http') && loca
 }
 
 // debug hooks for development
-window.everlune = { settings, env, shadows, get player() { return player; }, get chunks() { return chunks; }, renderer, camera, scene };
+window.everlune = { settings, env, shadows, audio, get player() { return player; }, get chunks() { return chunks; }, renderer, camera, scene };

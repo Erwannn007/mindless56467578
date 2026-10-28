@@ -31,6 +31,8 @@ const defaults = {
   timeOfDay: 0.3,           // 0..1, 0.25 = sunrise, 0.5 = noon
   player: null,             // {x, z, yaw, pitch}
   discovered: [],
+  volume: 0.8,
+  music: 0.35,
 };
 
 export function loadSettings() {

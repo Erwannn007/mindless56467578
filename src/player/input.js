@@ -51,7 +51,7 @@ export class Input {
   _down(e) {
     if (!this.enabled) return;
     if (e.pointerType === 'mouse') {
-      if (document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock?.();
+      if (document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock?.()?.catch?.(() => {});
       return;
     }
     e.preventDefault();

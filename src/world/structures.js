@@ -90,6 +90,13 @@ function groundRange(gen, poi, r) {
 const STONE_TINTS = [[1, 1, 1], [1.04, 1.0, 0.93], [0.95, 0.96, 1.0]];
 
 export function buildPOI(b, gen, poi, colliders) {
+  const n0 = colliders.length;
+  buildPOIGeometry(b, gen, poi, colliders);
+  const surface = poi.type === 'cabin' || poi.type === 'gazebo' ? 'wood' : 'stone';
+  for (let i = n0; i < colliders.length; i++) colliders[i].surface = surface;
+}
+
+function buildPOIGeometry(b, gen, poi, colliders) {
   const rng = mulberry32(poi.seed);
   const L = local(poi);
   const rot = poi.rot;

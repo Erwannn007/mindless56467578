@@ -21,6 +21,10 @@ export class UI {
     time.addEventListener('input', () => { settings.timeOfDay = +time.value; });
     const daylen = $('opt-daylen');
     daylen.addEventListener('input', () => { settings.dayLength = +daylen.value; this._daylenLabel(); });
+    for (const [id, key] of [['opt-volume', 'volume'], ['opt-music', 'music']]) {
+      const el = $(id);
+      el.addEventListener('input', () => { settings[key] = +el.value; handlers.applySettings(); });
+    }
     const sens = $('opt-sens');
     sens.addEventListener('input', () => { settings.sensitivity = +sens.value; handlers.applySettings(); });
     const quality = $('opt-quality');
@@ -57,6 +61,8 @@ export class UI {
     $('opt-time').value = s.timeOfDay;
     $('opt-daylen').value = s.dayLength;
     $('opt-sens').value = s.sensitivity;
+    $('opt-volume').value = s.volume;
+    $('opt-music').value = s.music;
     $('opt-quality').value = s.quality;
     $('opt-bob').checked = s.headBob !== false;
     $('opt-stats').checked = !!s.showStats;

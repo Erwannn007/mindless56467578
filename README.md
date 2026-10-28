@@ -45,7 +45,16 @@ src/
   player/player.js     déplacement FPS, pentes, marches, collisions
   player/input.js      clavier/souris + joystick tactile
   ui/ui.js             écran titre, menu, notifications
+  audio/audio.js       paysage sonore 100 % procédural (Web Audio)
 ```
+
+### Le son
+
+Aucun fichier audio : tout est synthétisé en direct avec la Web Audio API.
+Vent (plus fort en altitude, étouffé en forêt et à l'intérieur), bruissement des feuilles, ruisseaux et vagues
+spatialisés selon la direction de l'eau, pas selon le sol (herbe, feuilles, terre, sable, pierre, bois, eau),
+oiseaux le jour (chœur du matin), grillons, grenouilles et chouette la nuit, réverbération, et une musique
+générative très douce. Volume et musique réglables dans le menu. Sur iOS 17+, le son joue même en mode silencieux.
 
 ### Le rendu texel
 

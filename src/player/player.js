@@ -1,6 +1,7 @@
 // First-person walker: acceleration, slopes, steps, collisions, gentle head motion.
 
 import { EYE_HEIGHT, WATER_LEVEL } from '../config.js';
+import { smoothstep } from '../noise.js';
 
 const RADIUS = 0.35;
 const STEP = 0.5;
@@ -19,6 +20,11 @@ export class Player {
     this.headBob = true;
     this._cols = [];
     this.speed = 0;
+    this.groundCol = null;
+    this.surface = 'grass';
+    this.onStep = null;     // (surface, intensity, side) => void
+    this.stepIdx = 0;
+    this.side = 1;
   }
 
   place(x, z, yaw = 0, pitch = 0) {
@@ -32,11 +38,25 @@ export class Player {
   // Highest walkable surface under (x,z) not higher than maxY
   groundAt(x, z, maxY) {
     let g = this.gen.meshHeight(x, z);
+    this.groundCol = null;
     for (const c of this._cols) {
       if (c.y1 > maxY || c.y1 <= g) continue;
-      if (inside(c, x, z, 0)) g = c.y1;
+      if (inside(c, x, z, 0)) { g = c.y1; this.groundCol = c; }
     }
     return g;
+  }
+
+  // What the feet are touching, for footstep sounds
+  _surface() {
+    if (this.groundCol) return this.groundCol.surface || 'stone';
+    if (this.y < WATER_LEVEL - 0.05) return 'water';
+    const s = this.gen.sample(this.x, this.z);
+    if (s.path > 0.4) return 'dirt';
+    if (s.h < WATER_LEVEL + 1.0) return 'sand';
+    const n = this.gen.normalAt(this.x, this.z, 1);
+    if (n[1] < 0.8 || s.h > 50) return 'stone';
+    if (smoothstep(0.35, 0.9, s.forest) > 0.5) return 'leaves';
+    return 'grass';
   }
 
   update(dt, input, camera) {
@@ -61,8 +81,11 @@ export class Player {
 
     // vertical: snap up steps, fall with gravity
     const ground = this.groundAt(this.x, this.z, this.y + STEP);
-    if (ground >= this.y - 0.05) { this.y = ground; this.vy = 0; }
-    else {
+    const falling = this.vy;
+    if (ground >= this.y - 0.05) {
+      this.y = ground; this.vy = 0;
+      if (falling < -5 && this.onStep) this.onStep(this._surface(), 1.6, 0);
+    } else {
       this.vy -= 22 * dt;
       this.y += this.vy * dt;
       if (this.y < ground) { this.y = ground; this.vy = 0; }
@@ -75,11 +98,22 @@ export class Player {
     const targetEye = this.y + EYE_HEIGHT;
     this.eyeY += (targetEye - this.eyeY) * (1 - Math.exp(-dt * (targetEye > this.eyeY ? 14 : 22)));
     if (Math.abs(targetEye - this.eyeY) > 2) this.eyeY = targetEye;
+    // one bob cycle per stride; a footstep at each cycle
+    const stride = input.run ? 1.1 : 0.78;
+    this.bob += (dt * this.speed * Math.PI) / stride;
+    const idx = Math.floor(this.bob / Math.PI);
+    if (idx !== this.stepIdx) {
+      this.stepIdx = idx;
+      if (this.speed > 0.6 && this.vy === 0 && this.onStep) {
+        this.surface = this._surface();
+        this.side = -this.side;
+        this.onStep(this.surface, Math.min(1.3, 0.55 + this.speed / RUN * 0.7), this.side);
+      }
+    }
     let bobY = 0;
     if (this.headBob) {
-      this.bob += dt * this.speed * 1.9;
       const amt = Math.min(1, this.speed / WALK);
-      bobY = Math.sin(this.bob * 2) * 0.022 * amt;
+      bobY = -Math.abs(Math.sin(this.bob)) * 0.03 * amt;
     }
     camera.position.set(this.x, this.eyeY + bobY, this.z);
     camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
